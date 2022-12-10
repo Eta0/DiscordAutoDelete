@@ -1,0 +1,53 @@
+[build-system]
+requires = ["setuptools"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "discord-autodelete"
+version = "1.0.0"
+license = { text = "zlib/libpng License" }
+keywords = ["discord", "bot"]
+authors = [
+  { name="Eta" }
+]
+description = "Discord bot for expiring messages with custom time limits in channels."
+readme = "README.md"
+requires-python = ">=3.9"
+dependencies = [
+    "discord.py >= 2.1.0",
+    "pytimeparse >= 1.1.8",
+    "aiosqlite >= 0.17.0",
+    "python-dotenv >= 0.21.0"
+]
+classifiers = [
+    "Programming Language :: Python :: 3",
+    "License :: OSI Approved :: zlib/libpng License",
+    "Topic :: Communications :: Chat",
+    "Development Status :: 4 - Beta",
+    "Intended Audience :: End Users/Desktop",
+    "Operating System :: OS Independent",
+    "Programming Language :: Python :: Implementation :: CPython",
+    "Programming Language :: Python :: Implementation :: PyPy"
+]
+
+[project.optional-dependencies]
+speed = [
+    "aiohttp[speedups] >= 3.7.4",
+    'uvloop >= 0.17.0, < 1; sys_platform == "linux"'
+]
+
+[project.scripts]
+discord-autodelete = "discord_autodelete:main"
+
+[project.entry-points]
+
+[tool.setuptools]
+py-modules = ["discord_autodelete"]
+packages = []
+
+[tool.black]
+line-length = 120
+preview = true
+
+[tool.flake8]
+ignore = ["E203"]
