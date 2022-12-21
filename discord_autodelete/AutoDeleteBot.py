@@ -119,6 +119,9 @@ class AutoDeleteBot(commands.Bot):
     async def _begin_monitor(self):
         await self.scan_all_channels()
         self.monitor_expired_messages.start()
+        # on_ready events after the first may imply that the bot was temporarily disconnected
+        # to the extent that it cannot replay missed events, so it may have missed some messages
+        self.add_listener(self.scan_all_channels, name="on_ready")
 
     async def clear_expired_messages(self) -> None:
         async with self.delete_lock:
