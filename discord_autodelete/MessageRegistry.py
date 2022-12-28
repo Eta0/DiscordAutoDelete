@@ -143,14 +143,10 @@ class MessageRegistry(AbstractAsyncContextManager):
         # "On conflict" clause is relevant to prevent race conditions
         await self.db.execute(
             r"""
-            INSERT INTO channels(channel_id, duration_seconds, after) VALUES (:channel, :duration, :after)
-            ON CONFLICT DO UPDATE SET duration_seconds = :duration, after = :after;
+            INSERT INTO channels(channel_id, duration_seconds, after) VALUES (?, ?, ?)
+            ON CONFLICT (channel_id) DO UPDATE SET duration_seconds = excluded.duration_seconds, after = excluded.after;
             """,
-            {
-                "channel": channel_config.id,
-                "duration": channel_config.duration.total_seconds(),
-                "after": channel_config.after.id,
-            },
+            (channel_config.id, channel_config.duration.total_seconds(), channel_config.after.id),
         )
         await self.db.commit()
         # Since self.channels is used for preliminary checks, it should be updated last.
