@@ -24,15 +24,15 @@ async def async_main():
         "-d",
         "--database",
         dest="database",
-        help='path for the bot\'s working database. Defaults to "autodelete.sqlite".',
-        default="autodelete.sqlite",
+        help='path for the bot\'s working database. Defaults to $DB_PATH or "autodelete.sqlite".',
+        default=os.getenv("DB_PATH", "autodelete.sqlite"),
     )
     parser.add_argument(
         "-l",
         "--log",
         dest="log",
         help='path for bot\'s runtime log file. Defaults to "autodelete.log".',
-        default="autodelete.log",
+        default=os.getenv("LOG_PATH", "autodelete.log"),
     )
     parser.add_argument(
         "-e",
