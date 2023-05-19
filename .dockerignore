@@ -1,0 +1,11 @@
+# .env files with secrets should not be embedded in container images;
+# mount them at runtime instead, either as a file,
+# or directly as environment variables.
+.env
+
+**/__pycache__
+**/*.pyc
+
+*.egg-info
+*.sqlite
+*.log
