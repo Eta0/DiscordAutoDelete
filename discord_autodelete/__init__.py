@@ -28,7 +28,6 @@ async def async_main():
             'path for the bot\'s working database. Defaults to "autodelete.sqlite", or the environment variable'
             ' "AUTODELETE_DATABASE_PATH", if set.'
         ),
-        default=os.getenv("AUTODELETE_DATABASE_PATH", "autodelete.sqlite"),
     )
     parser.add_argument(
         "-l",
@@ -38,7 +37,6 @@ async def async_main():
             'path for bot\'s runtime log file. Defaults to "autodelete.log", or the environment variable'
             ' "AUTODELETE_LOG_PATH", if set.'
         ),
-        default=os.getenv("AUTODELETE_LOG_PATH", "autodelete.log"),
     )
     parser.add_argument(
         "-e",
@@ -73,13 +71,17 @@ async def async_main():
     )
     args = parser.parse_args()
 
-    if not (args.token and args.application_id):
+    if not (args.token and args.application_id and args.database and args.log):
         dotenv_path = args.env or dotenv.find_dotenv(usecwd=args.cwd_env)
         dotenv.load_dotenv(dotenv_path)
     if args.token:
         os.putenv("API_TOKEN", args.token)
     if args.application_id:
         os.putenv("APPLICATION_ID", args.application_id)
+    if not args.database:
+        args.database = os.getenv("AUTODELETE_LOG_PATH", "autodelete.log")
+    if not args.log:
+        args.log = os.getenv("AUTODELETE_LOG_PATH", "autodelete.log")
 
     if not (os.getenv("API_TOKEN") and os.getenv("APPLICATION_ID")):
         print(
