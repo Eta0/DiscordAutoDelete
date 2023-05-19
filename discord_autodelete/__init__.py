@@ -1,4 +1,4 @@
-from dotenv import load_dotenv
+import dotenv
 
 import os
 import sys
@@ -11,7 +11,7 @@ from .commands import AutoDeleteChannelControl
 
 async def async_main():
     parser = argparse.ArgumentParser(
-        description="Discord bot for expiring messages with custom time limits in channels."
+        description="Discord bot for expiring messages with per-channel custom time limits."
     )
     parser.add_argument(
         "-s",
@@ -24,15 +24,21 @@ async def async_main():
         "-d",
         "--database",
         dest="database",
-        help='path for the bot\'s working database. Defaults to $DB_PATH or "autodelete.sqlite".',
-        default=os.getenv("DB_PATH", "autodelete.sqlite"),
+        help=(
+            'path for the bot\'s working database. Defaults to "autodelete.sqlite", or the environment variable'
+            ' "AUTODELETE_DATABASE_PATH", if set.'
+        ),
+        default=os.getenv("AUTODELETE_DATABASE_PATH", "autodelete.sqlite"),
     )
     parser.add_argument(
         "-l",
         "--log",
         dest="log",
-        help='path for bot\'s runtime log file. Defaults to "autodelete.log".',
-        default=os.getenv("LOG_PATH", "autodelete.log"),
+        help=(
+            'path for bot\'s runtime log file. Defaults to "autodelete.log", or the environment variable'
+            ' "AUTODELETE_LOG_PATH", if set.'
+        ),
+        default=os.getenv("AUTODELETE_LOG_PATH", "autodelete.log"),
     )
     parser.add_argument(
         "-e",
@@ -41,6 +47,16 @@ async def async_main():
         help=(
             "path for bot's environment variable config file. "
             'Defaults to the first ".env" file in the installation directory or any of its parent directories.'
+        ),
+    )
+    parser.add_argument(
+        "-c",
+        "--cwd-env",
+        dest="cwd_env",
+        action="store_true",
+        help=(
+            'when --env is not provided, search for ".env" files starting from the current working directory,'
+            " rather than the installation directory."
         ),
     )
     parser.add_argument(
@@ -58,7 +74,8 @@ async def async_main():
     args = parser.parse_args()
 
     if not (args.token and args.application_id):
-        load_dotenv(args.env)
+        dotenv_path = args.env or dotenv.find_dotenv(usecwd=args.cwd_env)
+        dotenv.load_dotenv(dotenv_path)
     if args.token:
         os.putenv("API_TOKEN", args.token)
     if args.application_id:
