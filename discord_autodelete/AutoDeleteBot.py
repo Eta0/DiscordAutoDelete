@@ -3,7 +3,7 @@ import datetime
 import logging
 import os
 import sys
-from itertools import filterfalse, groupby
+from itertools import groupby
 from typing import Optional, Sequence
 
 import discord
