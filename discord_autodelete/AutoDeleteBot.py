@@ -3,7 +3,7 @@ import datetime
 import logging
 import os
 import sys
-from itertools import groupby
+from itertools import filterfalse, groupby
 from typing import Optional, Sequence
 
 import discord
@@ -150,11 +150,20 @@ class AutoDeleteBot(commands.Bot):
                     partial_channel: discord.PartialMessageable
                     message_group: Sequence[discord.PartialMessage] = tuple(message_group_iter)
                     if self.protect_pins:
-                        protected_messages = await asyncio.gather(*map(self.is_protected_message, message_group))
-                        message_group = tuple(
-                            m for m, protected in zip(message_group, protected_messages) if not protected
-                        )
-                        skipped_count += sum(protected_messages)
+                        unfiltered_message_count = len(message_group)
+                        if unfiltered_message_count > 1:
+                            # Retrieve a list of pins to compare against in a single request,
+                            # rather than fetching each message individually and checking its pinned status.
+                            try:
+                                channel_pins = {m.id for m in await partial_channel.pins()}
+                                message_group = tuple(m for m in message_group if m.id not in channel_pins)
+                            except discord.HTTPException:
+                                pass
+                        elif message_group and self.is_protected_message(message_group[0]):
+                            message_group = ()
+                        if not message_group:
+                            continue
+                        skipped_count += unfiltered_message_count - len(message_group)
                     time_limit = discord.utils.utcnow() - datetime.timedelta(days=13.8)  # 14 days, plus margin of error
                     bulk_deletable = tuple(m for m in message_group if m.created_at > time_limit)
                     non_bulk_deletable = (m for m in message_group if m.created_at <= time_limit)
