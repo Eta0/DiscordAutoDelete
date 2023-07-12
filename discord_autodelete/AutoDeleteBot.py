@@ -13,7 +13,7 @@ from .MessageRegistry import MessageRegistry
 
 
 class AutoDeleteBot(commands.Bot):
-    def __init__(self, sync_commands: bool, db_path: str, log_path: str):
+    def __init__(self, sync_commands: bool, db_path: str, log_path: str, *, protect_pins: bool = False):
         self.sync = sync_commands
         self.db_path = db_path
         self.log_path = log_path
@@ -22,6 +22,7 @@ class AutoDeleteBot(commands.Bot):
         self.delete_lock = asyncio.Lock()
         self.wake_time = discord.utils.utcnow()
         self.active_sleep = None
+        self.protect_pins = protect_pins
 
         intents = discord.Intents.none()
         intents.guilds = True
@@ -123,6 +124,14 @@ class AutoDeleteBot(commands.Bot):
         # to the extent that it cannot replay missed events, so it may have missed some messages
         self.add_listener(self.scan_all_channels, name="on_ready")
 
+    async def is_protected_message(self, message: discord.PartialMessage):
+        # Protects pinned messages from deletion
+        try:
+            m = await message.fetch()
+            return m.pinned
+        except discord.HTTPException:
+            return False
+
     async def clear_expired_messages(self) -> None:
         async with self.delete_lock:
             async with self.message_registry:
@@ -133,12 +142,19 @@ class AutoDeleteBot(commands.Bot):
                 messages = await self.message_registry.pop_expired_messages()
                 messages_by_channel = groupby(messages, lambda m: m.channel)
 
+                skipped_count = 0
                 deletion_reason = "Time-based autodelete"
                 deletions = []
-                for partial_channel, message_group in messages_by_channel:
+                for partial_channel, message_group_iter in messages_by_channel:
                     # Dynamic deletion strategy based on bulk message delete limitations.
                     partial_channel: discord.PartialMessageable
-                    message_group: Sequence[discord.PartialMessage] = tuple(message_group)
+                    message_group: Sequence[discord.PartialMessage] = tuple(message_group_iter)
+                    if self.protect_pins:
+                        protected_messages = await asyncio.gather(*map(self.is_protected_message, message_group))
+                        message_group = tuple(
+                            m for m, protected in zip(message_group, protected_messages) if not protected
+                        )
+                        skipped_count += sum(protected_messages)
                     time_limit = discord.utils.utcnow() - datetime.timedelta(days=13.8)  # 14 days, plus margin of error
                     bulk_deletable = tuple(m for m in message_group if m.created_at > time_limit)
                     non_bulk_deletable = (m for m in message_group if m.created_at <= time_limit)
@@ -163,7 +179,7 @@ class AutoDeleteBot(commands.Bot):
                         # Messages older than 14 days cannot be bulk-deleted.
                         deletions.append(m.delete())
 
-                attempt_count = len(messages)
+                attempt_count = len(messages) - skipped_count
                 failure_count = 0
                 for message, result in zip(messages, await asyncio.gather(*deletions, return_exceptions=True)):
                     if isinstance(result, Exception):

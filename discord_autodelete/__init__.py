@@ -69,6 +69,12 @@ async def async_main():
         dest="application_id",
         help='the bot\'s application ID, if not provided in a ".env" file in the installation directory.',
     )
+    parser.add_argument(
+        "--protect-pins",
+        action="store_true",
+        help=argparse.SUPPRESS  # Experimental and thus undocumented
+        # help="if set, pinned messages are excluded from deletion. Incurs a performance penalty."
+    )
     args = parser.parse_args()
 
     if not (args.token and args.application_id and args.database and args.log):
@@ -103,7 +109,9 @@ async def async_main():
     except ImportError:
         pass
 
-    bot = AutoDeleteBot(sync_commands=args.sync, db_path=args.database, log_path=args.log)
+    bot = AutoDeleteBot(
+        sync_commands=args.sync, db_path=args.database, log_path=args.log, protect_pins=args.protect_pins
+    )
     bot.tree.add_command(AutoDeleteChannelControl())
     async with bot:
         await bot.start(os.getenv("API_TOKEN"))
