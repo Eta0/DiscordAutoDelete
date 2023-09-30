@@ -85,7 +85,7 @@ async def async_main():
     if args.application_id:
         os.putenv("APPLICATION_ID", args.application_id)
     if not args.database:
-        args.database = os.getenv("AUTODELETE_LOG_PATH", "autodelete.log")
+        args.database = os.getenv("AUTODELETE_DATABASE_PATH", "autodelete.sqlite")
     if not args.log:
         args.log = os.getenv("AUTODELETE_LOG_PATH", "autodelete.log")
 
