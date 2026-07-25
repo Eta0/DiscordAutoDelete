@@ -81,9 +81,9 @@ async def async_main():
         dotenv_path = args.env or dotenv.find_dotenv(usecwd=args.cwd_env)
         dotenv.load_dotenv(dotenv_path)
     if args.token:
-        os.putenv("API_TOKEN", args.token)
+        os.environ["API_TOKEN"] = args.token
     if args.application_id:
-        os.putenv("APPLICATION_ID", args.application_id)
+        os.environ["APPLICATION_ID"] = args.application_id
     if not args.database:
         args.database = os.getenv("AUTODELETE_DATABASE_PATH", "autodelete.sqlite")
     if not args.log:
