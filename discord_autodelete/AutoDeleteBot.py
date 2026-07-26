@@ -160,7 +160,7 @@ class AutoDeleteBot(commands.Bot):
                                 message_group = tuple(m for m in message_group if m.id not in channel_pins)
                             except discord.HTTPException:
                                 pass
-                        elif message_group and self.is_protected_message(message_group[0]):
+                        elif message_group and await self.is_protected_message(message_group[0]):
                             message_group = ()
                         if not message_group:
                             continue
