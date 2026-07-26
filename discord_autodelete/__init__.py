@@ -2,8 +2,13 @@ import dotenv
 
 import os
 import sys
-import asyncio
 import argparse
+
+try:
+    # noinspection PyPackageRequirements,PyUnresolvedReferences
+    from uvloop import run
+except ImportError:
+    from asyncio import run
 
 from .AutoDeleteBot import AutoDeleteBot
 from .commands import AutoDeleteChannelControl
@@ -101,14 +106,6 @@ async def async_main():
         )
         sys.exit(1)
 
-    try:
-        # noinspection PyPackageRequirements,PyUnresolvedReferences
-        import uvloop
-
-        uvloop.install()
-    except ImportError:
-        pass
-
     bot = AutoDeleteBot(
         sync_commands=args.sync, db_path=args.database, log_path=args.log, protect_pins=args.protect_pins
     )
@@ -118,7 +115,7 @@ async def async_main():
 
 
 def main():
-    asyncio.run(async_main())
+    run(async_main())
 
 
 if __name__ == "__main__":
